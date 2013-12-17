@@ -16,4 +16,13 @@ Pozmieniałem jeszcze pare rzeczy, na razie spróbuje to zakodzić jako tako,
 a potem zrbimy te exeption safety do końca, choć wydaje mi się, że nie jest
 to jakieś straszne, ale to w praniu wyjdzie ^^
 
-Prawie wszystko jest, oprócz remove. 
+Ok, jest wszystko. Musimy miec mape ze wskaznikami , bo potrzebujemy dodawac
+do setów wskazniki na synow i rodzicow. Teraz tak:
+a) Trzeba usunac ten konstruktor kopiujacy i operator przypisania
+b) Trzeba sprawdzić czy to działa (narazie sie kompiluje, to wiemy), i dlaczego nie działa : D
+c) Jeszcze trzeba tam exeption safety chyba dodać/sprawdzic/zrobic porzadnie, i generalnie
+   zapewne zdebugować, bo nie próbowałem tego uruchamiać
+
+Jakbyś miał jakieś pytania, uwagi, to pisz na mp334965@students.mimuw.edu.pl bądź ślij sms na 510124174,
+musimy działać szybko bo zaraz termin minie ^^ Powodzenia!
+
