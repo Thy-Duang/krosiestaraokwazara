@@ -9,6 +9,8 @@
 #ifndef VIRUS_GENEALOGY_H
 #define VIRUS_GENEALOGY_H
 
+
+
 class Virus;
 
 class VirusAlreadyCreated : std::exception {
@@ -21,11 +23,11 @@ class TriedToRemoveStemVirus : std::exception {
 };
 
 template <class Virus>
-class VirusGeneaology {
+class VirusGenealogy {
 
 private:
-	//VirusGeneaology(VirusGeneaology &virgen) = delete;
-	//operator=(VirusGeneaology &virgen) = delete;
+	//VirusGenealogy(VirusGenealogy &virgen) = delete;
+	//operator=(VirusGenealogy &virgen) = delete;
 	typedef typename Virus::id_type v_id;
 
 	//Klasa reprezentujaca wierzcholek, mamy set dzieci i set rodzicow
@@ -62,13 +64,13 @@ private:
 	
 	
 
-public:
+public: 
 	// Tworzy nowa genealogie.
 	// Tworzy takze wezel wirusa macierzystego o identyfikatorze stem_id.
-	VirusGeneaology(v_id const &new_stem_id):
+	VirusGenealogy(v_id const &new_stem_id):
 	stem_id(new_stem_id)
 	{
-		stem_node(new Node(new_stem_id));
+		stem_node (new Node(new_stem_id));
 		nodes.insert(map_entry(new_stem_id,std::weak_ptr<Node> (stem_node)));
 	}
 
@@ -223,6 +225,5 @@ public:
 	
 	}
 };
-
 
 #endif

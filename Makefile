@@ -1,4 +1,7 @@
-all: virgen.o
+all: test
 
-virgen.o: virus_genealogy.hpp
-	g++ virus_genealogy.hpp -std=c++11 -o virgen.o
+test: test.cpp virus_genealogy.hpp
+	g++ virus_genealogy.hpp test.cpp -o test -std=c++11
+
+clean:
+	rm -f test *orig *~
