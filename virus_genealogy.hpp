@@ -34,8 +34,15 @@ private:
 	class Node {
 		public:
 			v_id id;
+			std::shared_ptr<Virus> virus;
 			std::set<std::shared_ptr<Node> > chilren;
 			std::set<std::weak_ptr<Node> > parents;
+
+			Node(v_id newId):
+			id(newId),
+			virus(new Virus(newId))
+			{
+			}
 	};
 
 	typedef std::pair<v_id,Node> map_entry;
@@ -49,7 +56,7 @@ public:
 	VirusGeneaology(v_id const &new_stem_id):
 	stem_id(new_stem_id)
 	{
-		nodes.insert(map_entry(new_stem_id,Node()));
+		nodes.insert(map_entry(new_stem_id,Node(new_stem_id)));
 	}
 
 	// Podaje identyfikator wirusa macierzystego.
@@ -104,7 +111,12 @@ public:
 	// Zwraca referencje do obiektu reprezentujacego wirus o podanym
 	// identyfikatorze.
 	// Zglasza wyjatek VirusNotFound, jesli zadany wirus nie istnieje.
-	Virus& operator[](v_id const &id) const;
+	Virus& operator[](v_id const &id) const
+	{
+		if (!exists(id))
+			throw VirusNotFound();
+		return *(nodes.find(id) -> virus);
+	}
 
 	// Tworzy wezel reprezentujacy nowy wirus o identyfikatorze id
 	// powstaly z wirusow o podanym identyfikatorze parent_id lub
@@ -114,6 +126,9 @@ public:
 	// Zglasza wyjatek VirusNotFound, jesli ktorys z wyspecyfikowanych
 	// poprzednikow nie istnieje.
 	void create(v_id const &id, v_id const &parent_id);
+	{
+		
+	}
 	void create(v_id const &id, std::vector<v_id> const &parent_ids);
 
 	// Dodaje nowa krawedz w grafie genealogii.

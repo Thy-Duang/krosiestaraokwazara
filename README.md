@@ -10,4 +10,8 @@ ale nadal tego nie rozumiem.
 Proponuje zrobić mape <id_wirusa, wierzcholek> a w wierzcholku trzymamy
 sery rodzicow i dzieci + do tego proponuje nie rozbijać tego na nagłówek i
 implementacje, bo bedzie mniej chrzanienia sie z zakresami :D a i tak
-za to punktow nikt nie odejmuje, ani nawet uwagi nie zwracaja. 
+za to punktow nikt nie odejmuje, ani nawet uwagi nie zwracaja.
+
+Pozmieniałem jeszcze pare rzeczy, na razie spróbuje to zakodzić jako tako,
+a potem zrbimy te exeption safety do końca, choć wydaje mi się, że nie jest
+to jakieś straszne, ale to w praniu wyjdzie ^^ 
