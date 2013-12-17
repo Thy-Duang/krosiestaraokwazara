@@ -33,10 +33,10 @@ private:
 	//Klasa reprezentujaca wierzcholek, mamy set dzieci i set rodzicow
 	class Node {
 		public:
-			v_id id;
-			std::shared_ptr<Virus> virus;
-			std::set<std::shared_ptr<Node> > chilren;
-			std::set<std::weak_ptr<Node> > parents;
+			v_id id;									//ID wierzcholka
+			std::shared_ptr<Virus> virus;				//wskaznik na obiekt wirusa
+			std::set<std::shared_ptr<Node> > chilren;   //set dzieci
+			std::set<std::weak_ptr<Node> > parents;     //set rodzicow
 
 			Node(v_id newId):
 			id(newId),
@@ -45,10 +45,10 @@ private:
 			}
 	};
 
-	typedef std::pair<v_id,Node> map_entry;
+	typedef std::pair<v_id,std::weak_ptr<Node> > map_entry;
 
 	//Mapa wierzcholkow
-	std::map<v_id, Node> nodes;
+	std::map<v_id, std::weak_ptr<Node> > nodes;
 
 public:
 	// Tworzy nowa genealogie.
@@ -56,7 +56,7 @@ public:
 	VirusGeneaology(v_id const &new_stem_id):
 	stem_id(new_stem_id)
 	{
-		nodes.insert(map_entry(new_stem_id,Node(new_stem_id)));
+		nodes.insert(map_entry(new_stem_id,std::weak_ptr<Node> (new Node(new_stem_id))));
 	}
 
 	// Podaje identyfikator wirusa macierzystego.
@@ -81,11 +81,11 @@ public:
 		if (!exists(id))
 			throw VirusNotFound();
 		
-		std::vector<v_id> result (nodes.find(id) -> children.size());
+		std::vector<v_id> result (*(nodes.find(id)) -> children.size());
 		int i = 0;
 		//Przechodzimy po secie dzieci i dodajemy do wektora dzieci
-		for (std::shared_ptr<Node> child : nodes.find(id) -> children)
-			result[i++] = child -> id;
+		for (std::shared_ptr<Node> child : *(nodes.find(id))-> children)
+			result[i++] = (child -> id);
 		return result;
 	}
 
@@ -97,10 +97,11 @@ public:
 		if (!exists(id))
 			throw VirusNotFound();
 		
-		std::vector<v_id> result (nodes.find(id) -> parents.size());
+		std::vector<v_id> result (*(nodes.find(id)) -> parents.size());
+
+		//Przechodzimy po secie rodzicow i dodajemy do wektora rodzicow
 		int i = 0;
-		//Przechodzimy po secie dzieci i dodajemy do wektora dzieci
-		for (std::weak_ptr<Node> parent : nodes.find(id) -> parents)
+		for (std::weak_ptr<Node> parent : *(nodes.find(id)) -> parents)
 			result[i++] = parent -> id;
 		return result;
 	}
@@ -115,7 +116,7 @@ public:
 	{
 		if (!exists(id))
 			throw VirusNotFound();
-		return *(nodes.find(id) -> virus);
+		return *(*(nodes.find(id)) -> virus);
 	}
 
 	// Tworzy wezel reprezentujacy nowy wirus o identyfikatorze id
@@ -125,15 +126,62 @@ public:
 	// id juz istnieje.
 	// Zglasza wyjatek VirusNotFound, jesli ktorys z wyspecyfikowanych
 	// poprzednikow nie istnieje.
-	void create(v_id const &id, v_id const &parent_id);
+	void create(v_id const &id, v_id const &parent_id)
 	{
-		
+		if (exists(id))
+			throw VirusAlreadyCreated();
+		if (!exists(parent_id))
+			throw VirusNotFound();
+
+		nodes.insert(map_entry(id, std::weak_ptr<Node>(new Node(id))));
+
+		std::weak_ptr<Node> createdNode= *(nodes.find(id));
+		std::weak_ptr<Node> parentNode= *(nodes.find(parent_id));
+
+		//dodajemy rodzica do listy rodzicow nowego wierzcholka
+		createdNode -> parents.insert(std::weak_ptr<Node>(parentNode));
+
+		//dodajemy  dziecko do listy dzieci rodzica
+		parentNode -> children.insert(std::shared_ptr<Node>(createdNode));
 	}
-	void create(v_id const &id, std::vector<v_id> const &parent_ids);
+	void create(v_id const &id, std::vector<v_id> const &parent_ids)
+	{
+		if (exists(id))
+			throw VirusAlreadyCreated();
+		for (v_id i : parent_ids)
+			if (!exists(i))
+				throw VirusNotFound();
+		nodes.insert(map_entry(id, std::weak_ptr<Node>(new Node(id))));
+		
+		std::weak_ptr<Node> createdNode= *(nodes.find(id));
+		for (v_id i : parent_ids)
+		{
+			std::weak_ptr<Node> parentNode= *(nodes.find(i));
+			//dodajemy rodzica do listy rodzicow nowego wierzcholka
+			createdNode -> parents.insert(std::weak_ptr<Node>(parentNode));
+
+			//dodajemy  dziecko do listy dzieci rodzica
+			parentNode -> children.insert(std::shared_ptr<Node>(createdNode));
+		}
+	}
 
 	// Dodaje nowa krawedz w grafie genealogii.
 	// Zglasza wyjatek VirusNotFound, jesli ktorys z podanych wirusow nie istnieje.
-	void connect(v_id const &child_id, v_id const &parent_id);
+	void connect(v_id const &child_id, v_id const &parent_id)
+	{
+		if (!exists(child_id) || !exists(parent_id))
+			throw VirusNotFound();
+
+		std::weak_ptr<Node> childNode= *(nodes.find(child_id));
+		std::weak_ptr<Node> parentNode= *(nodes.find(parent_id));
+
+		//dodajemy rodzica do listy rodzicow nowego wierzcholka
+		childNode -> parents.insert(std::weak_ptr<Node>(parentNode));
+
+		//dodajemy  dziecko do listy dzieci rodzica
+		parentNode -> children.insert(std::shared_ptr<Node>(childNode));
+
+	}
 
 	// Usuwa wirus o podanym identyfikatorze.
 	// Zglasza wyjatek VirusNotFound, jesli zadany wirus nie istnieje.

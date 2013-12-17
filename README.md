@@ -14,4 +14,6 @@ za to punktow nikt nie odejmuje, ani nawet uwagi nie zwracaja.
 
 Pozmieniałem jeszcze pare rzeczy, na razie spróbuje to zakodzić jako tako,
 a potem zrbimy te exeption safety do końca, choć wydaje mi się, że nie jest
-to jakieś straszne, ale to w praniu wyjdzie ^^ 
+to jakieś straszne, ale to w praniu wyjdzie ^^
+
+Prawie wszystko jest, oprócz remove. 
