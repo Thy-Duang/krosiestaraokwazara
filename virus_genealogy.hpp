@@ -42,7 +42,7 @@ private:
 			std::set<boost::shared_ptr<Node> > children;   //set dzieci
 			std::set<boost::weak_ptr<Node> > parents;     //set rodzicow
 			boost::weak_ptr<Node> ja;
-			std::map<v_id, boost::weak_ptr<Node> >::iterator iterator_do_mnie;
+			typename std::map<v_id, boost::weak_ptr<Node> >::iterator iterator_do_mnie;
 			Node(const v_id &newId, std::map<v_id, boost::weak_ptr<Node> > *extnodes):
 			id(newId),
 			virus(new Virus(newId))
@@ -57,6 +57,7 @@ private:
 					child -> parents.erase(boost::weak_ptr<Node>(boost::shared_ptr<Node>(this)));
 				}
 				children.erase();
+
 				delete virus;
 			}
 	};
@@ -75,7 +76,8 @@ public:
 	stem_id(new_stem_id),
 	stem_node(new Node(new_stem_id, &nodes))
 	{
-		nodes.insert(map_entry(new_stem_id,boost::weak_ptr<Node> (stem_node)));
+		stem_node->ja(stem_node);
+		stem_node->iterator_do_mnie = nodes.insert(map_entry(new_stem_id,boost::weak_ptr<Node> (stem_node)));
 	}
 	~VirusGenealogy()
 	{
