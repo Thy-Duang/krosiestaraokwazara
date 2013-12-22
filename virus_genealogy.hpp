@@ -41,7 +41,8 @@ private:
 			Virus *virus;								//obiekt wirusa
 			std::set<boost::shared_ptr<Node> > children;   //set dzieci
 			std::set<boost::weak_ptr<Node> > parents;     //set rodzicow
-
+			boost::weak_ptr<Node> ja;
+			std::map<v_id, boost::weak_ptr<Node> >::iterator iterator_do_mnie;
 			Node(const v_id &newId, std::map<v_id, boost::weak_ptr<Node> > *extnodes):
 			id(newId),
 			virus(new Virus(newId))
@@ -55,6 +56,7 @@ private:
 				{
 					child -> parents.erase(boost::weak_ptr<Node>(boost::shared_ptr<Node>(this)));
 				}
+				children.erase();
 				delete virus;
 			}
 	};
@@ -75,7 +77,10 @@ public:
 	{
 		nodes.insert(map_entry(new_stem_id,boost::weak_ptr<Node> (stem_node)));
 	}
-
+	~VirusGenealogy()
+	{
+		stem_node.reset();
+	}
 	// Podaje identyfikator wirusa macierzystego.
 	v_id get_stem_id() const
 	{
@@ -98,10 +103,10 @@ public:
 		if (!exists(id))
 			throw VirusNotFound();
 
-		std::vector<v_id> result (*(nodes.find(id)) -> children.size());
+		std::vector<v_id> result ((nodes.find(id))->second.lock()-> children.size());
 		int i = 0;
 		//Przechodzimy po secie dzieci i dodajemy do wektora dzieci
-		for (boost::shared_ptr<Node> child : *(nodes.find(id))-> children)
+		for (boost::shared_ptr<Node> child : (nodes.find(id))->second.lock()-> children)
 			result[i++] = (child -> id);
 		return result;
 	}
@@ -114,18 +119,15 @@ public:
 		if (!exists(id))
 			throw VirusNotFound();
 
-		std::vector<v_id> result (*(nodes.find(id)) -> parents.size());
+		std::vector<v_id> result ((nodes.find(id))->second.lock() -> parents.size());
 
 		//Przechodzimy po secie rodzicow i dodajemy do wektora rodzicow
 		int i = 0;
-		for (boost::weak_ptr<Node> parent : *(nodes.find(id)) -> parents) {
-			result[i++] = parent.lock -> id;
+		for (boost::weak_ptr<Node> parent : (nodes.find(id))->second.lock() -> parents) {
+			result[i++] = parent.lock() -> id;
 		}
 		return result;
 	}
-
-
-
 
 	// Zwraca referencje do obiektu reprezentujacego wirus o podanym
 	// identyfikatorze.
@@ -134,7 +136,7 @@ public:
 	{
 		if (!exists(id))
 			throw VirusNotFound();
-		return 	(*(nodes.find(id)) -> virus);
+		return 	*(nodes.find(id)->second.lock() -> virus);
 	}
 
 	// Tworzy wezel reprezentujacy nowy wirus o identyfikatorze id
@@ -152,18 +154,18 @@ public:
 			throw VirusNotFound();
 
 		//wsadzamy do mapy wierzcholkow
-		boost::shared_ptr<Node> newNode(new Node(id));
+		boost::shared_ptr<Node> newNode(new Node(id, &nodes));
 		nodes.insert(map_entry(id, boost::weak_ptr<Node>(newNode)));
 
 
-		boost::weak_ptr<Node> createdNode= *(nodes.find(id));
-		boost::weak_ptr<Node> parentNode= *(nodes.find(parent_id));
+		boost::weak_ptr<Node> createdNode= nodes.find(id)->second;
+		boost::weak_ptr<Node> parentNode= nodes.find(parent_id)->second;
 
 		//dodajemy rodzica do listy rodzicow nowego wierzcholka
-		createdNode -> parents.insert(boost::weak_ptr<Node>(parentNode));
+		createdNode.lock() -> parents.insert(boost::weak_ptr<Node>(parentNode));
 
 		//dodajemy  dziecko do listy dzieci rodzica
-		parentNode -> children.insert(boost::shared_ptr<Node>(createdNode));
+		parentNode.lock() -> children.insert(boost::shared_ptr<Node>(createdNode));
 	}
 
 	void create(v_id const &id, std::vector<v_id> const &parent_ids)
@@ -175,16 +177,16 @@ public:
 				throw VirusNotFound();
 
 		//dodajemy do mapy wierzcholkow
-		boost::shared_ptr<Node> newNode(new Node(id));
+		boost::shared_ptr<Node> newNode(new Node(id, &nodes));
 		nodes.insert(map_entry(id, boost::weak_ptr<Node>(newNode)));
 
 		//uaktualniamy listy rodzicow i dzieci
-		boost::weak_ptr<Node> createdNode= *(nodes.find(id));
+		boost::weak_ptr<Node> createdNode= nodes.find(id)->second;
 		for (v_id i : parent_ids)
 		{
-			boost::weak_ptr<Node> parentNode= *(nodes.find(i));
+			boost::weak_ptr<Node> parentNode= nodes.find(i)->second;
 			//dodajemy rodzica do listy rodzicow nowego wierzcholka
-			createdNode -> parents.insert(boost::weak_ptr<Node>(parentNode));
+			createdNode.lock() -> parents.insert(boost::weak_ptr<Node>(parentNode));
 
 			//dodajemy  dziecko do listy dzieci rodzica
 			parentNode.lock() -> children.insert(boost::shared_ptr<Node>(createdNode));
@@ -198,14 +200,14 @@ public:
 		if (!exists(child_id) || !exists(parent_id))
 			throw VirusNotFound();
 
-		boost::weak_ptr<Node> childNode= *(nodes.find(child_id));
-		boost::weak_ptr<Node> parentNode= *(nodes.find(parent_id));
+		boost::weak_ptr<Node> childNode= nodes.find(child_id)->second;
+		boost::weak_ptr<Node> parentNode= nodes.find(parent_id)->second;
 
 		//dodajemy rodzica do listy rodzicow nowego wierzcholka
-		childNode -> parents.insert(boost::weak_ptr<Node>(parentNode));
+		childNode.lock() -> parents.insert(boost::weak_ptr<Node>(parentNode));
 
 		//dodajemy  dziecko do listy dzieci rodzica
-		parentNode -> children.insert(boost::shared_ptr<Node>(childNode));
+		parentNode.lock() -> children.insert(boost::shared_ptr<Node>(childNode));
 
 	}
 
@@ -218,11 +220,11 @@ public:
 			throw VirusNotFound();
 		if (id == get_stem_id())
 			throw TriedToRemoveStemVirus();
-		boost::weak_ptr<Node> removedNode= *(nodes.find(id));
+		boost::weak_ptr<Node> removedNode= nodes.find(id)->second;
 
 		//usuwamy wskaznik do usuwanego wierzcholka z listy dzieci u rodzica
 		//(powiazania z dziecmi sie usuna w destruktorze)
-		for (boost::weak_ptr<Node> parent : removedNode -> parents)
+		for (boost::weak_ptr<Node> parent : removedNode.lock() -> parents)
 		{
 			parent.lock() -> children.erase(boost::shared_ptr<Node>(removedNode));
 		}
