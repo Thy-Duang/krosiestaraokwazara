@@ -54,10 +54,10 @@ private:
 				// usuwamy wskaznik do usuwanego wierzcholka z listy rodzicow u dzieci
 				for (boost::shared_ptr<Node> child : children)
 				{
-					child -> parents.erase(boost::weak_ptr<Node>(boost::shared_ptr<Node>(this)));
+					child -> parents.erase(ja);
 				}
-				children.erase();
-
+				children.erase(children.begin(), children.end());
+				nodes->erase(iterator_do_mnie);
 				delete virus;
 			}
 	};
@@ -76,8 +76,8 @@ public:
 	stem_id(new_stem_id),
 	stem_node(new Node(new_stem_id, &nodes))
 	{
-		stem_node->ja(stem_node);
-		stem_node->iterator_do_mnie = nodes.insert(map_entry(new_stem_id,boost::weak_ptr<Node> (stem_node)));
+		stem_node->ja = boost::weak_ptr<Node>(stem_node);
+		stem_node->iterator_do_mnie = nodes.insert(map_entry(new_stem_id,boost::weak_ptr<Node> (stem_node))).first;
 	}
 	~VirusGenealogy()
 	{
@@ -223,14 +223,13 @@ public:
 		if (id == get_stem_id())
 			throw TriedToRemoveStemVirus();
 		boost::weak_ptr<Node> removedNode= nodes.find(id)->second;
-
 		//usuwamy wskaznik do usuwanego wierzcholka z listy dzieci u rodzica
 		//(powiazania z dziecmi sie usuna w destruktorze)
 		for (boost::weak_ptr<Node> parent : removedNode.lock() -> parents)
 		{
+			std::cerr<<"ok"<<std::endl;
 			parent.lock() -> children.erase(boost::shared_ptr<Node>(removedNode));
 		}
-
 	}
 };
 
