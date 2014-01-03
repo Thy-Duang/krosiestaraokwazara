@@ -15,13 +15,25 @@
 
 class Virus;
 
-class VirusAlreadyCreated : std::exception {
+class VirusAlreadyCreated : public std::exception {
+	public:
+	const char* what() const noexcept {
+		return "VirusAlreadyCreated";
+	}
 };
 
-class VirusNotFound : std::exception {
+class VirusNotFound : public std::exception {
+	public:
+	const char* what() const noexcept {
+		return "VirusNotFound";
+	}
 };
 
-class TriedToRemoveStemVirus : std::exception {
+class TriedToRemoveStemVirus : public std::exception {
+	public:
+	const char* what() const noexcept {
+		return "TriedToRemoveStemVirus";
+	}
 };
 
 template <class Virus>
@@ -36,7 +48,7 @@ private:
 	class Node {
 		private:
 			std::map<v_id, boost::weak_ptr<Node> > *nodes;
-		public:
+	public:
 			v_id id;									//ID wierzcholka
 			Virus *virus;								//obiekt wirusa
 			std::set<boost::shared_ptr<Node> > children;   //set dzieci
@@ -57,18 +69,19 @@ private:
 					child -> parents.erase(ja);
 				}
 				children.erase(children.begin(), children.end());
-				nodes->erase(iterator_do_mnie);
+				nodes->erase(nodes->find(id));
 				delete virus;
 			}
 	};
 
 	v_id stem_id;
 	boost::shared_ptr<Node> stem_node;			//smart pointer pokazujacy na stem_node
-	std::map<v_id, boost::weak_ptr<Node> > nodes; //mapa wierzcholkow (trzeba trzymac weak pointery, w readme wiecej)
+
 
 	typedef std::pair<v_id,boost::weak_ptr<Node> > map_entry;
 
 public:
+	std::map<v_id, boost::weak_ptr<Node> > nodes; //mapa wierzcholkow (trzeba trzymac weak pointery, w readme wiecej)
 	VirusGenealogy() = delete;
 	// Tworzy nowa genealogie.
 	// Tworzy takze wezel wirusa macierzystego o identyfikatorze stem_id.
@@ -220,14 +233,14 @@ public:
 	{
 		if (!exists(id))
 			throw VirusNotFound();
-		if (id == get_stem_id())
+		if (id == stem_id)
 			throw TriedToRemoveStemVirus();
+
 		boost::weak_ptr<Node> removedNode= nodes.find(id)->second;
 		//usuwamy wskaznik do usuwanego wierzcholka z listy dzieci u rodzica
 		//(powiazania z dziecmi sie usuna w destruktorze)
-		for (boost::weak_ptr<Node> parent : removedNode.lock() -> parents)
+		for (boost::weak_ptr<Node> parent : (removedNode.lock() -> parents))
 		{
-			std::cerr<<"ok"<<std::endl;
 			parent.lock() -> children.erase(boost::shared_ptr<Node>(removedNode));
 		}
 	}

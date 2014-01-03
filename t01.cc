@@ -36,6 +36,7 @@ int main() {
   assert(gen.get_children("A").size() == 2);
   assert("D" == gen["D"].get_id());
   gen.remove("A");
+  std::cerr<<"tu ok"<<std::endl;
   assert(!gen.exists("A"));
   assert(gen.exists("B"));
   assert(gen.exists("C"));
